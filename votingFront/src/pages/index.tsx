@@ -2,20 +2,18 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Head from 'next/head';
 import type { NextPage } from 'next'; 
 import styles from '../styles/Home.module.css';
-import { useReadContract, useWriteContract } from 'wagmi'
+import { useReadContract, useWriteContract, useSignMessage } from 'wagmi'
+import { type UseSignMessageReturnType } from 'wagmi'
 import constants from '../../constants.json'
 import { useState, useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from "ethers";
+import { toBytes } from 'viem';
 
-const handleClick2 = () => {
-  setTimeout(() => {
-    location.reload();
-  }, 7000);
-}
 
 const Home: NextPage = () => {
-  const { writeContractAsync } = useWriteContract()
+  const { writeContractAsync } = useWriteContract();
+  const { signMessage } = useSignMessage();
   const { address: addressUser, isConnected } = useAccount();
   const [hasVoted, setHasVoted] = useState<boolean | null>(null);
   const [yesVotes, setYesVotes] = useState<string>('');
@@ -24,13 +22,6 @@ const Home: NextPage = () => {
   const [voteSignatureHash, setVoteSignatureHash] = useState<string>('');
   const hasProcessedHash = useRef(false);
   let hashTrx = '';
-
-  const handleClick = () => {
-  };
-
-  useEffect(() => {
-    handleClick();
-}, [hash]);
 
   const resultHasVoted = useReadContract({
     abi: constants.abi,
@@ -113,11 +104,13 @@ const Home: NextPage = () => {
         {hasVoted === false ? (
           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
           <button 
-            onClick={() => {handleClick2();
+            onClick={() => {
+              const message = JSON.stringify({voted: true, signature: 'miFirmaDeVotoAFavor'});
+              const signature = signMessage({message: message, account: addressUser});
               writeContractAsync({
               abi: constants.abi,
               address: constants.address as `0x${string}`,
-              functionName: 'vote', args: [true, ethers.keccak256(ethers.toUtf8Bytes("miFirmaDeVotoAFavor"))]
+              functionName: 'vote', args: [true, ethers.keccak256(toBytes(signature))]
               }).then((result) => {
                 hashTrx = result;
                 console.log('hashTrx', hashTrx);
@@ -129,11 +122,13 @@ const Home: NextPage = () => {
             Votar a favor
           </button>
           <button 
-          onClick={() => {handleClick2();
+          onClick={() => {
+            const message = JSON.stringify({ vote: false, signature: 'miFirmaDeVotoEnContra' });
+            const signature = signMessage({message: message, account: addressUser});
             writeContractAsync({
               abi: constants.abi,
               address: constants.address as `0x${string}`,
-              functionName: 'vote', args: [false, ethers.keccak256(ethers.toUtf8Bytes("miFirmaDeVotoAFavor"))] }).
+              functionName: 'vote', args: [false, ethers.keccak256(toBytes(signature))] }).
               then((result) => {
                 hashTrx = result;
                 console.log('hashTrx', hashTrx);
@@ -150,7 +145,7 @@ const Home: NextPage = () => {
             <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Usted ya ha votado</p>
             </div>
         )}
-        {hash !== '0x0000000000000000000000000000000000000000000000000000000000000000' && hash && <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Hash de la transacción: {hash}</p>
+        {hashTrx !== '0x0000000000000000000000000000000000000000000000000000000000000000' && hashTrx && <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Hash de la transacción: {hashTrx}</p>
         }
         
         <h3>Total de Votos:</h3>
