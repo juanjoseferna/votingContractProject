@@ -67,7 +67,9 @@ const Home: NextPage = () => {
   useEffect(() => {
     console.log(voteSignaturesHash)
     setVoteSignatureHash(String(voteSignaturesHash.data))
-  }, [voteSignaturesHash]);const resultYesVotes = useReadContract({
+  }, [voteSignaturesHash]);
+  
+  const resultYesVotes = useReadContract({
     abi: constants.abi,
     address: constants.address as `0x${string}`,
     functionName: 'getYesVotes',
@@ -96,8 +98,8 @@ const Home: NextPage = () => {
       <main className={styles.main}>
         
         <div style={{ textAlign: 'center' }}>
-          Hola, dirección {addressUser}
-          <br/>, Bienvenido a Voting Contract 💼<br/><br/>
+          Hola!, {addressUser}
+          <br/> Bienvenido a Voting Contract 💼<br/><br/>
         </div>
         
         <ConnectButton /><br/>
@@ -145,8 +147,6 @@ const Home: NextPage = () => {
             <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Usted ya ha votado</p>
             </div>
         )}
-        {hashTrx !== '0x0000000000000000000000000000000000000000000000000000000000000000' && hashTrx && <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Hash de la transacción: {hashTrx}</p>
-        }
         
         <h3>Total de Votos:</h3>
           <p>Votos a favor: {yesVotes?.toString()}</p>
