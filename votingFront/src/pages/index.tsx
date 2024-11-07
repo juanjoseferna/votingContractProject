@@ -4,31 +4,33 @@ import type { NextPage } from 'next';
 import styles from '../styles/Home.module.css';
 import { useReadContract, useWriteContract } from 'wagmi'
 import constants from '../../constants.json'
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from "ethers";
 
-
-const handleClick = () => {
+const handleClick2 = () => {
   setTimeout(() => {
-    window.location.reload();
-  }, 1500);
-};
-
+    location.reload();
+  }, 7000);
+}
 
 const Home: NextPage = () => {
   const { writeContractAsync } = useWriteContract()
   const { address: addressUser, isConnected } = useAccount();
   const [hasVoted, setHasVoted] = useState<boolean | null>(null);
   const [yesVotes, setYesVotes] = useState<string>('');
+  const [hash, setHashVote] = useState<string>('');
   const [noVotes, setNoVotes] = useState<string>('');
   const [voteSignatureHash, setVoteSignatureHash] = useState<string>('');
+  const hasProcessedHash = useRef(false);
   let hashTrx = '';
-  const resultVote = useReadContract({
-    abi: constants.abi,
-    address: constants.address as `0x${string}`,
-    functionName: 'vote',
-  });
+
+  const handleClick = () => {
+  };
+
+  useEffect(() => {
+    handleClick();
+}, [hash]);
 
   const resultHasVoted = useReadContract({
     abi: constants.abi,
@@ -41,7 +43,18 @@ const Home: NextPage = () => {
     if (resultHasVoted.data !== undefined) {
       setHasVoted(resultHasVoted.data as boolean | null);
     }
-  }, [resultHasVoted.data]);
+  }, [resultHasVoted]);
+
+  const resultHatch = useReadContract({
+    abi: constants.abi,
+    address: constants.address as `0x${string}`,
+    functionName: 'getVoteSignatureHash',
+    args: [addressUser], 
+  });  
+  
+  useEffect(() => {
+      setHashVote(String(resultHatch.data));
+  }, [resultHatch]);
 
   const resultNoVotes = useReadContract({
     abi: constants.abi,
@@ -96,12 +109,11 @@ const Home: NextPage = () => {
           <br/>, Bienvenido a Voting Contract 💼<br/><br/>
         </div>
         
-        <ConnectButton />
-        <br/><br/>{hasVoted}
+        <ConnectButton /><br/>
         {hasVoted === false ? (
           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
           <button 
-            onClick={() => {
+            onClick={() => {handleClick2();
               writeContractAsync({
               abi: constants.abi,
               address: constants.address as `0x${string}`,
@@ -117,7 +129,8 @@ const Home: NextPage = () => {
             Votar a favor
           </button>
           <button 
-          onClick={() => {writeContractAsync({
+          onClick={() => {handleClick2();
+            writeContractAsync({
               abi: constants.abi,
               address: constants.address as `0x${string}`,
               functionName: 'vote', args: [false, ethers.keccak256(ethers.toUtf8Bytes("miFirmaDeVotoAFavor"))] }).
@@ -137,6 +150,8 @@ const Home: NextPage = () => {
             <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Usted ya ha votado</p>
             </div>
         )}
+        {hash !== '0x0000000000000000000000000000000000000000000000000000000000000000' && hash && <p style={{ color: '#333', fontSize: '18px', fontWeight: 'bold' }}>Hash de la transacción: {hash}</p>
+        }
         
         <h3>Total de Votos:</h3>
           <p>Votos a favor: {yesVotes?.toString()}</p>
